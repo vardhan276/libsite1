@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Department Library - Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-image: url('images/libsiteimage.jpg'); /* Add your image file here */
+            background-size: cover; /* Ensures the image covers the entire background */
+            background-position: center; /* Centers the image */
+            background-repeat: no-repeat; /* Prevents the image from repeating */
+        }
+
+        /* Header */
+        header {
+            background-color: rgba(51, 51, 51, 0.8); /* Semi-transparent background */
+            color: white;
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 1.8rem;
+        }
+
+        /* Navigation */
+        nav {
+            background-color: rgba(68, 68, 68, 0.8); /* Semi-transparent background */
+            padding: 1rem;
+            text-align: center;
+        }
+
+        nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+        }
+
+        nav ul li {
+            display: inline;
+        }
+
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-size: 1.2rem;
+        }
+
+        /* Main Content */
+        .container {
+            display: flex;
+            flex: 1;
+            padding: 20px;
+        }
+
+        /* Left Side: Search Results */
+        .results-section {
+            flex: 2;
+            padding: 20px;
+            display: none; /* Hidden until search is performed */
+        }
+  
+
+    .results-section h2 {
+        padding-left: 250px; /* Moves only the heading */
+        color: black; /* Optional for readability */
+    }
+
+        #searchResults {
+            background-color: rgba(255, 255, 255, 0.9); /* Semi-transparent white background */
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Right Side: Search Bar */
+        .search-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end; /* Moves search bar to the right */
+            justify-content: flex-start; /* Moves it higher */
+            padding: 40px 20px 20px; /* Increased top padding */
+            min-width: 250px;
+        }
+
+        .search-container {
+            width: 80%;
+            max-width: 300px; /* Sets a compact size */
+            background-color: rgba(244, 244, 244, 0.9); /* Semi-transparent white background */
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: -5px 0px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .search-container h2 {
+            margin-bottom: 10px;
+            font-size: 1.4rem;
+        }
+
+        .search-container input {
+            width: 90%;
+            padding: 8px;
+            font-size: 0.9rem;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .search-container button {
+            width: 70%;
+            padding: 8px;
+            font-size: 0.9rem;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .search-container button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        Welcome to the Department Library
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="recentarrivals.html">Recent Arrivals</a></li>
+            <li><a href="journals.html">Journals</a></li>
+            <li><a href="settings.html">Settings</a></li>
+            <li><a href="borrowed-books.html"> Borrowed Books</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <!-- Left: Search Results -->
+        <section class="results-section" id="resultsSection">
+            <h2>Search Results</h2>
+            <div id="searchResults"></div>
+        </section>
+
+        <!-- Right: Search Box -->
+        <section class="search-section">
+            <div class="search-container">
+                <h2>Search Books</h2>
+                <input type="text" id="searchBox" placeholder="Search by Name, Author, or Code">
+                <button onclick="searchBooks()">Search</button>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Add an event listener to trigger search on pressing "Enter"
+        document.getElementById("searchBox").addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                searchBooks(); // Call the searchBooks function
+            }
+        });
+
+        async function searchBooks() {
+            const query = document.getElementById("searchBox").value.trim();
+            if (!query) {
+                alert("Please enter a search term!");
+                return;
+            }
+
+            try {
+                // Fetching book results from the server
+                const response = await fetch(`http://localhost:5000/searchbooks?query=${encodeURIComponent(query)}`);
+                const books = await response.json();
+
+                const resultsSection = document.getElementById("resultsSection");
+                const resultsDiv = document.getElementById("searchResults");
+                resultsDiv.innerHTML = ""; // Clear previous results
+
+                if (books.length === 0) {
+                    resultsDiv.innerHTML = "<p>No books found.</p>";
+                } else {
+                    books.forEach(book => {
+                        const bookDiv = document.createElement("div");
+                        bookDiv.innerHTML = `<p><strong>${book.name}</strong> by ${book.author} (Code: ${book.unique_code})</p>`;
+                        resultsDiv.appendChild(bookDiv);
+                    });
+                }
+
+                // Show search results when a search is made
+                resultsSection.style.display = "block";
+            } catch (error) {
+                console.error("Error fetching books:", error);
+                alert("An error occurred while searching for books. Please try again later.");
+            }
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Borrowed Books</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 1.8rem;
+        }
+
+        .content {
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .borrowed-books-section {
+            width: 60%;
+        }
+
+        .borrowed-books-section h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        .borrowed-books-section ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .borrowed-books-section ul li {
+            font-size: 1.2rem;
+            margin: 10px 0;
+        }
+
+        .allot-book-section {
+            width: 35%;
+            text-align: center;
+        }
+
+        .allot-book-section button {
+            padding: 10px 20px;
+            background-color: #333;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .allot-book-section button:hover {
+            background-color: #555;
+        }
+
+        .allot-book-form {
+            display: none;
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .allot-book-form label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+
+        .allot-book-form input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+
+        .allot-book-form button {
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .allot-book-form button:hover {
+            background-color: #0056b3;
+        }
+
+        .penalty-section {
+            margin-top: 40px;
+        }
+
+        .penalty-section h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        .penalty-section ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .penalty-section ul li {
+            font-size: 1.2rem;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        Borrowed Books
+    </header>
+
+    <div class="content">
+        <!-- Borrowed Books Section -->
+        <div class="borrowed-books-section">
+            <h2>Already Allotted Books</h2>
+            <ul id="borrowedBooks">
+                <li>Loading borrowed books...</li>
+            </ul>
+        </div>
+
+        <!-- Allot Book Section -->
+        <div class="allot-book-section">
+            <button onclick="showAllotBookForm()">Allot Book</button>
+
+            <div class="allot-book-form" id="allotBookForm">
+                <h3>Allot a Book</h3>
+                <form id="allotBookFormElement">
+                    <label for="studentId">Student ID:</label>
+                    <input type="text" id="studentId" placeholder="Enter Student ID (e.g., STD002)" required>
+
+                    <label for="bookId">Book ID:</label>
+                    <input type="text" id="bookId" placeholder="Enter Book ID (e.g., B001)" required>
+
+                    <button type="submit">Allot Book</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Penalty Section -->
+    <div class="penalty-section" id="penaltySection" style="display:none;">
+        <h2>Your Penalties</h2>
+        <ul id="penaltyList">
+            <li>Loading penalties...</li>
+        </ul>
+    </div>
+
+    <script>
+        // Fetch and display already allotted books
+        async function fetchBorrowedBooks() {
+            try {
+                // Example: get user info from localStorage after login
+                console.log("Fetching borrowed books..debug.");
+                const user = JSON.parse(localStorage.getItem("user"));
+                console.log(user); // user.id should be a number, not "STD002"
+                let url = "https://library-backend.onrender.com/borrowedbooks";
+                if (user && user.role === "student") {
+                    url += `?user_id=${user.id}`;
+                }
+                const response = await fetch(url);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }console.log("Response received..debug2.");
+                const books = await response.json();
+
+                const borrowedBooksList = document.getElementById("borrowedBooks");
+                borrowedBooksList.innerHTML = ""; // Clear the loading message
+
+                if (books.length === 0) {
+                    borrowedBooksList.innerHTML = "<li>No borrowed books found.</li>";
+                } else {
+                    books.forEach(book => {
+                        let displayReturnDate;
+                        if (book.return_date) {
+                            displayReturnDate = new Date(book.return_date).toLocaleDateString();
+                        } else {
+                            // Calculate expected return date
+                            const borrowDate = new Date(book.borrow_date);
+                            borrowDate.setDate(borrowDate.getDate() + 15);
+                            displayReturnDate = borrowDate.toLocaleDateString();
+                        }
+
+                        const bookItem = document.createElement("li");
+                        bookItem.innerHTML = `
+                            <strong>${book.name}</strong> by ${book.author} 
+                            (Borrowed by: ${book.student_id}, Return Date: ${displayReturnDate})
+                        `;
+
+                        // Show "Return" button only for librarian and if not yet returned
+                        if (user && user.role === "librarian" && !book.return_date) {
+                            console.log("User is librarian, adding return button..debug3.");
+                            const returnBtn = document.createElement("button");
+                            returnBtn.textContent = "Mark as Returned";
+                            returnBtn.style.marginLeft = "10px";
+                            returnBtn.onclick = async function () {
+                                if (confirm("Mark this book as returned?")) {
+                                    await returnBook(book.student_id, book.book_id);
+                                }
+                            };
+                            bookItem.appendChild(returnBtn);
+                        }
+
+                        borrowedBooksList.appendChild(bookItem);
+                    });
+                }
+            } catch (error) {
+                console.error("Error fetching borrowed books:", error);
+                document.getElementById("borrowedBooks").innerHTML = `<li>An error occurred while fetching borrowed books: ${error.message}</li>`;
+            }
+        }
+
+        // Show the allot book form
+        function showAllotBookForm() {
+            document.getElementById("allotBookForm").style.display = "block";
+        }
+
+        // Handle allot book form submission
+        document.getElementById("allotBookFormElement").addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            // Make sure you use the correct variable names
+            const studentRollNo = document.getElementById("studentId").value;
+            const bookUniqueCode = document.getElementById("bookId").value; // This is now the unique code
+
+            try {
+                const response = await fetch("https://library-backend.onrender.com/allot-book", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        student_roll_no: studentRollNo,
+                        book_unique_code: bookUniqueCode
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || "Failed to allot book");
+                }
+
+                const result = await response.json();
+                alert(`Book allotted successfully! Return Date: ${result.return_date}`);
+                document.getElementById("allotBookFormElement").reset();
+                fetchBorrowedBooks(); // Refresh the borrowed books list
+            } catch (error) {
+                console.error("Error allotting book:", error);
+                alert(error.message);
+            }
+        });
+
+        // Fetch penalties
+        async function fetchPenalties() {
+            const user = JSON.parse(localStorage.getItem("user"));
+            if (!user) {
+                document.getElementById("penaltyList").innerHTML = "<li>Please log in to view penalties.</li>";
+                return;
+            }
+            const response = await fetch(`https://library-backend.onrender.com/calculate-penalty?user_id=${user.id}`);
+            const penalties = await response.json();
+
+            const penaltyList = document.getElementById("penaltyList");
+            if (penalties.length === 0) {
+                penaltyList.innerHTML = "<li>No penalties found.</li>";
+            } else {
+                penaltyList.innerHTML = "";
+                penalties.forEach(p => {
+                    penaltyList.innerHTML += `<li>${p.name}: ₹${p.penalty} (${p.days_late} days late)</li>`;
+                });
+            }
+        }
+
+        // Fetch borrowed books and penalties when the page loads
+        fetchBorrowedBooks();
+        const user = JSON.parse(localStorage.getItem("user"));
+        if (user && user.role === "student") {
+            document.getElementById("penaltySection").style.display = "block";
+            fetchPenalties();
+        } else {
+            document.getElementById("penaltySection").style.display = "none";
+        }
+
+        async function returnBook(studentRollNo, bookId) {
+            try {
+                // Get user_id from roll_no
+                const userIdResponse = await fetch(`https://library-backend.onrender.com/profile?user_id=1`);
+                const userProfile = await userIdResponse.json();
+                const userId = userProfile.id;
+
+                const response = await fetch("https://library-backend.onrender.com/return", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ user_id: userId, book_id: bookId })
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    alert(result.message);
+                    fetchBorrowedBooks();
+                    fetchPenalties();
+                } else {
+                    alert(result.error || "Failed to return book");
+                }
+            } catch (error) {
+                alert("Error returning book: " + error.message);
+            }
+        }
+    </script>
+
+</body>
+</html>

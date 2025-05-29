@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 1.8rem;
+        }
+
+        .content {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .content h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        .content p, .content ul {
+            font-size: 1.2rem;
+            margin: 10px 0;
+        }
+
+        .settings-options {
+            margin: 20px 0;
+        }
+
+        .settings-options button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .settings-options button:hover {
+            background-color: #0056b3;
+        }
+
+        .profile-section {
+            margin-top: 30px;
+            text-align: left;
+            display: inline-block;
+        }
+
+        .profile-section ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .profile-section ul li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        Settings
+    </header>
+
+    <div class="content">
+        <h2>Account Settings</h2>
+        <p>Manage your account settings and preferences here.</p>
+
+        <!-- Settings Options -->
+        <div class="settings-options">
+            <button onclick="changePassword()">Change Password</button>
+            <button onclick="logOut()">Log Out</button>
+        </div>
+
+        <!-- Profile Section -->
+        <div class="profile-section">
+            <h2>My Profile</h2>
+            <ul id="profileDetails">
+                <li>Loading profile...</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Fetch and display profile details
+        async function fetchProfile() {
+            // Replace '1' with the actual logged-in user's ID (from session/localStorage)
+            const userId = localStorage.getItem("user_id") || 1;
+            try {
+                const response = await fetch(`https://library-backend.onrender.com/profile?user_id=${userId}`);
+                if (!response.ok) throw new Error("Failed to fetch profile");
+                const profile = await response.json();
+
+                const profileList = document.getElementById("profileDetails");
+                profileList.innerHTML = `
+                    <li><strong>Name:</strong> ${profile.name}</li>
+                    <li><strong>Year:</strong> ${profile.year}</li>
+                    <li><strong>Branch:</strong> ${profile.branch || "N/A"}</li>
+                    <li><strong>Roll No:</strong> ${profile.roll_no}</li>
+                `;
+            } catch (error) {
+                document.getElementById("profileDetails").innerHTML = `<li>${error.message}</li>`;
+            }
+        }
+
+        // Change Password
+        function changePassword() {
+            window.location.href = "change-password.html"; // Redirect to the Change Password page
+        }
+
+        // Log Out
+        function logOut() {
+            alert("Logging out...");
+            // Perform logout logic (e.g., clear session, redirect to login page)
+            window.location.href = "login.html";
+        }
+
+        // Fetch profile details when the page loads
+        fetchProfile();
+    </script>
+
+</body>
+</html>

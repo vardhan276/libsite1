@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recent Arrivals</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 1.8rem;
+        }
+
+        .content {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .content h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        .content ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .content ul li {
+            font-size: 1.2rem;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        Recent Arrivals
+    </header>
+
+    <div class="content">
+        <h2>Books Arrived in the Last 7 Days</h2>
+        <ul id="recentBooks">
+            <li>Loading recent arrivals...</li>
+        </ul>
+    </div>
+
+    <script>
+        async function fetchRecentArrivals() {
+            try {
+                const response = await fetch("https://library-backend.onrender.com/recentarrivals");
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const books = await response.json();
+
+                const recentBooksList = document.getElementById("recentBooks");
+                recentBooksList.innerHTML = ""; // Clear the loading message
+
+                if (books.length === 0) {
+                    recentBooksList.innerHTML = "<li>No recent arrivals found.</li>";
+                } else {
+                    books.forEach(book => {
+                        const availabilityText = book.availability === 1 ? "Yes" : "No"; 
+                        const bookItem = document.createElement("li");
+                        bookItem.innerHTML = `
+                            <strong>${book.name}</strong> by ${book.author} 
+                            (Publisher: ${book.publisher}, Availability: ${availabilityText})
+                        `;
+                        recentBooksList.appendChild(bookItem);
+                    });
+                }
+            } catch (error) {
+                console.error("Error fetching recent arrivals:", error);
+                document.getElementById("recentBooks").innerHTML = `<li>An error occurred while fetching recent arrivals: ${error.message}</li>`;
+            }
+        }
+
+        // Call the function to fetch recent arrivals when the page loads
+        fetchRecentArrivals();
+    </script>
+
+</body>
+</html>
